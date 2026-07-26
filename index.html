@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Workout Journal" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <title>5-Week Training Journal</title>
+  <style>
+    :root{
+      --bg:#f3f4f6; --card:#ffffff; --ink:#111827; --muted:#6b7280;
+      --line:#e5e7eb; --accent:#2563eb; --accent2:#1d4ed8; --success:#059669;
+      --danger:#dc2626; --road:#7c3aed; --home:#0369a1;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+    header{background:#111827;color:#fff;padding:18px 20px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+    header h1{margin:0;font-size:1.25rem}
+    header p{margin:4px 0 0;color:#d1d5db;font-size:.9rem}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+    button,.btn{
+      border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;
+      background:var(--accent);color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:7px
+    }
+    button:hover,.btn:hover{filter:brightness(.93)}
+    button.secondary{background:#374151}
+    button.ghost{background:#fff;color:#111827;border:1px solid var(--line)}
+    button.danger{background:var(--danger)}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+    .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+    .stat .label{font-size:.8rem;color:var(--muted)}
+    .stat .value{font-size:1.5rem;font-weight:800;margin-top:4px}
+    .week{margin-bottom:20px}
+    .week-title{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px}
+    .week-title h2{font-size:1.15rem;margin:0}
+    .week-progress{color:var(--muted);font-size:.9rem;text-align:right}
+    .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .card.completed{border-color:#a7f3d0;background:#f0fdf4}
+    .card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .card h3{margin:0;font-size:1rem}
+    .day{color:var(--accent);font-weight:800;font-size:.85rem;margin-bottom:3px}
+    .mode-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:13px 0 8px}
+    .mode-label{font-size:.78rem;font-weight:800;color:var(--muted)}
+    .segmented{display:grid;grid-template-columns:1fr 1fr;background:#e5e7eb;border-radius:10px;padding:3px;min-width:225px}
+    .segmented button{padding:8px 9px;border-radius:8px;background:transparent;color:#4b5563;font-size:.78rem}
+    .segmented button.active.home{background:var(--home);color:#fff}
+    .segmented button.active.road{background:var(--road);color:#fff}
+    .mode-note{font-size:.78rem;color:var(--muted);margin-bottom:6px}
+    .workout-list{margin:10px 0 12px;padding-left:18px;color:#374151}
+    .workout-list li{margin:6px 0;line-height:1.35}
+    .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+    .field{display:flex;flex-direction:column;gap:5px}
+    label{font-size:.8rem;font-weight:700;color:#374151}
+    input,textarea,select{
+      width:100%;padding:9px 10px;border:1px solid #d1d5db;border-radius:9px;background:#fff;
+      font:inherit;color:var(--ink)
+    }
+    textarea{min-height:76px;resize:vertical}
+    .full{grid-column:1/-1}
+    .complete-wrap{display:flex;align-items:center;gap:8px;font-weight:800}
+    .complete-wrap input{width:20px;height:20px}
+    .footer-note{color:var(--muted);font-size:.82rem;text-align:center;margin:24px 0}
+    .bar{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin-top:8px}
+    .bar > span{display:block;height:100%;background:var(--success);width:0}
+    .hidden{display:none}
+
+    .week-toggle-wrap{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:16px}
+    .week-toggle-label{font-size:.82rem;color:var(--muted);font-weight:800;margin-bottom:8px}
+    .week-toggle{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;background:#e5e7eb;border-radius:12px;padding:4px}
+    .week-toggle button{background:transparent;color:#4b5563;padding:10px 8px}
+    .week-toggle button.active{background:#111827;color:#fff}
+    @media(max-width:800px){
+      .stats{grid-template-columns:repeat(2,1fr)}
+      .cards{grid-template-columns:1fr}
+    }
+    @media(max-width:520px){
+      .fields{grid-template-columns:1fr}
+      .full{grid-column:auto}
+      .toolbar button,.toolbar .btn{flex:1;justify-content:center}
+      .mode-row{align-items:stretch;flex-direction:column}
+      .segmented{width:100%;min-width:0}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>5-Week CrossFit / HIIT Training Journal</h1>
+  <p>Choose Home Gym or Road Workout each day • 40 minutes or less</p>
+</header>
+
+<div class="wrap">
+
+  <div class="week-toggle-wrap">
+    <div class="week-toggle-label">SELECT WEEK</div>
+    <div class="week-toggle" id="weekToggle"></div>
+  </div>
+
+  <div class="toolbar">
+    <button onclick="exportJSON()">Export Backup</button>
+    <label class="btn secondary" for="importFile">Import Backup</label>
+    <input id="importFile" class="hidden" type="file" accept=".json" onchange="importJSON(event)">
+    <button class="ghost" onclick="exportCSV()">Export CSV</button>
+    <button class="danger" onclick="resetAll()">Reset Journal</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="label">Completed</div><div class="value" id="completedCount">0 / 20</div></div>
+    <div class="stat"><div class="label">Completion</div><div class="value" id="completionPct">0%</div></div>
+    <div class="stat"><div class="label">Average RPE</div><div class="value" id="avgRpe">—</div></div>
+    <div class="stat"><div class="label">Total Training Time</div><div class="value" id="totalTime">0 min</div></div>
+  </div>
+
+  <div id="app"></div>
+
+  <div class="footer-note">
+    Entries and workout-mode choices save automatically in this browser. Export a backup periodically if you use multiple devices.
+  </div>
+</div>
+
+<script>
+const program = [
+  {week:1, workouts:[
+    {day:"Sunday",
+      home:{title:"Squat + Sprint",items:["Warm-up (5 min): 2 rounds — 200m row, 10 air squats, 10 push-ups, 5 inchworms","Strength (10 min): Back Squat 5×3 @ 75–80%","WOD (15 min cap): 4 rounds — 10 DB thrusters, 10 push-ups, 200m run"]},
+      road:{title:"Lower Body + Intervals",items:["Treadmill block (5 min): Brisk walk progressing to easy jog","Dumbbell block (15 min): 3 rounds — 12 goblet squats, 12 DB Romanian deadlifts, 10 reverse lunges per leg; rest 45 sec","Treadmill block (15 min): 5 rounds — 2 min hard run, 1 min walk","Optional core (3 min): 2 rounds — 12 weighted sit-ups, 30-sec plank"]}},
+    {day:"Tuesday",
+      home:{title:"Clean Day",items:["Warm-up: 2 rounds — 200m row, 5 empty-bar cleans, 5 front squats","Strength (10 min): EMOM × 10 — 2 hang power cleans","WOD: 12-min AMRAP — 8 power cleans, 8 burpees, 200m run"]},
+      road:{title:"Push + Tempo Run",items:["Treadmill block (5 min): Easy walk/jog","Dumbbell block (15 min): 4 rounds — 12 DB floor presses, 10 standing DB shoulder presses, 12 close-grip DB presses; rest 45 sec","Treadmill block (12 min): Alternate 1 min fast / 1 min moderate","Finisher (4 min): 2 rounds — 10 DB thrusters, 30-sec suitcase hold per side"]}},
+    {day:"Thursday",
+      home:{title:"Deadlift",items:["Warm-up: 2 rounds — 200m run, 10 good mornings, 5 deadlifts","Strength (10 min): Deadlift 5×2 heavy","WOD (15 min cap): 400m run, 30 HPC; 300m run, 20 HPC; 200m run, 10 HPC"]},
+      road:{title:"Pull + Sprints",items:["Treadmill block (5 min): Easy walk/jog","Dumbbell block (15 min): 4 rounds — 12 one-arm rows per side, 10 renegade rows total, 15 rear-delt flyes; rest 45 sec","Treadmill block (15 min): 8 rounds — 30 sec fast, 75 sec walk","Core (3 min): 20 Russian twists + 10 dead bugs per side"]}},
+    {day:"Saturday",
+      home:{title:"Engine Builder",items:["Warm-up (5 min): Easy row and mobility","WOD: 20-min AMRAP — 10-cal row, 8 power cleans, 8 shoulder-to-overhead, 200m run"]},
+      road:{title:"Full-Body Grinder",items:["Treadmill block (5 min): Easy walk/jog","Dumbbell block (20 min): 4 rounds — 10 DB cleans, 10 front squats, 10 push presses, 12 RDLs, 12 bent-over rows","Treadmill block (10 min): Steady Zone 3 run","Cool down (2 min): Easy walk"]}}
+  ]},
+  {week:2, workouts:[
+    {day:"Sunday",
+      home:{title:"Front Squat",items:["Warm-up (5 min): 250m row, walking lunges, air squats","Strength (10 min): Front Squat 5×3","WOD (15 min cap): 4 rounds — 8 thrusters, 10 box step-overs, 200m run"]},
+      road:{title:"Lower Body Progression",items:["Treadmill block (5 min): Brisk walk at 3–5% incline","Dumbbell block (16 min): 4 rounds — 10 heavy goblet squats, 12 DB RDLs, 10 walking lunges per leg","Treadmill block (14 min): 7 rounds — 75 sec hard, 45 sec walk","Progression: Add 5 lb or use slower 3-sec lowering"]}},
+    {day:"Tuesday",
+      home:{title:"Snatch",items:["Warm-up (5 min): 250m row, overhead squats, muscle snatches","Strength (10 min): Power Snatch 5×2","WOD (15 min cap): 21-15-9 alternating DB snatches and row calories"]},
+      road:{title:"Upper Push + Incline",items:["Treadmill block (5 min): Easy walk/jog","Dumbbell block (16 min): 4 rounds — 10 DB floor presses, 10 Arnold presses, 12 push-ups, 12 DB pullovers","Treadmill block (12 min): 2 min at 4–6% incline / 1 min easy, repeated 4 times","Finisher (3 min): Max-quality DB thrusters in sets of 8"]}},
+    {day:"Thursday",
+      home:{title:"Heavy Pull",items:["Warm-up (5 min): 200m row, 10 RDLs, 10 push-ups","Strength (10 min): Deadlift EMOM × 10 — 1 heavy rep","WOD (12 min cap): 4 rounds — 5 deadlifts, 8 burpees"]},
+      road:{title:"Back + Speed",items:["Treadmill block (5 min): Easy jog","Dumbbell block (16 min): 4 rounds — 10 heavy one-arm rows per side, 12 chest-supported rows, 15 rear-delt flyes","Treadmill block (14 min): 10 rounds — 30 sec fast, 54 sec walk","Core (3 min): 2 rounds — 30-sec side plank per side"]}},
+    {day:"Saturday",
+      home:{title:"Hero",items:["Warm-up (5 min): Easy row and barbell prep","WOD (20 min cap): 3 rounds — 15 hang power cleans, 15 toes-to-bar, 300m run"]},
+      road:{title:"Dumbbell Chipper",items:["Treadmill block (5 min): Easy jog","Dumbbell block (22 min cap): 50 goblet squats, 40 alternating DB snatches, 30 push presses, 20 renegade rows, 10 devil presses; partition as needed","Treadmill block (8 min): Progressive run, increasing pace every 2 min","Cool down (2 min): Walk"]}}
+  ]},
+  {week:3, workouts:[
+    {day:"Sunday",
+      home:{title:"Heavy Squat",items:["Warm-up (5 min): 500m row and mobility","Strength (10 min): Back Squat 5×2 @ 85%","WOD: 12-min AMRAP — 8 DB front squats, 8 push-ups, 8 box jumps"]},
+      road:{title:"Heavy Legs + Threshold",items:["Treadmill block (5 min): Brisk incline walk","Dumbbell block (15 min): 5 rounds — 8 heavy goblet squats, 10 DB RDLs, 8 reverse lunges per leg","Treadmill block (15 min): 3 rounds — 4 min threshold run, 1 min walk","Core (3 min): 12 weighted sit-ups + 30-sec plank, repeat"]}},
+    {day:"Tuesday",
+      home:{title:"Clean & Jerk",items:["Warm-up (5 min): Barbell complex","Strength (10 min): Build to a heavy clean & jerk single","WOD: Every 3 min × 5 — 12-cal row, 6 power cleans"]},
+      road:{title:"Push Strength + Fartlek",items:["Treadmill block (5 min): Easy jog","Dumbbell block (15 min): 5 rounds — 8 heavy DB floor presses, 8 push presses, 10 incline or standard push-ups","Treadmill block (15 min): Alternate 90 sec hard / 90 sec easy","Finisher (3 min): DB front-rack hold, 3 × 30 sec"]}},
+    {day:"Thursday",
+      home:{title:"Deadlift + Push Press",items:["Warm-up (5 min): 300m run, 10 good mornings, 10 lunges","Strength (10 min): Deadlift 5×2","WOD (15 min cap): 18-12-6 deadlift and push press; 200m run after each round"]},
+      road:{title:"Pull Strength + Hills",items:["Treadmill block (5 min): Easy walk/jog","Dumbbell block (15 min): 5 rounds — 8 heavy one-arm rows per side, 10 renegade rows total, 12 rear-delt flyes","Treadmill block (15 min): 5 rounds — 2 min at 5–8% incline, 1 min easy","Core (3 min): 20 suitcase marches per side"]}},
+    {day:"Saturday",
+      home:{title:"Conditioning EMOM",items:["Warm-up (5 min): Easy row and movement prep","WOD: 20-min EMOM — M1 12-cal row, M2 10 burpees, M3 8 front squats, M4 rest"]},
+      road:{title:"Full-Body Density",items:["Treadmill block (5 min): Easy jog","Dumbbell block (20 min AMRAP): 8 DB cleans, 8 front squats, 8 push presses, 10 rows, 10 RDLs","Treadmill block (10 min): 20 sec fast / 40 sec easy","Goal: Beat total dumbbell rounds next cycle"]}}
+  ]},
+  {week:4, workouts:[
+    {day:"Sunday",
+      home:{title:"Thrusters",items:["Warm-up (5 min): 250m row, shoulder mobility, push-ups","Strength (10 min): Thruster 5×3","WOD (15 min cap): 4 rounds — 10 thrusters, 10 push-ups, 200m run"]},
+      road:{title:"Leg Supersets + Incline",items:["Treadmill block (5 min): Brisk incline walk","Dumbbell block (15 min): 4 rounds without setting DBs down — 10 goblet squats, 10 RDLs, 8 lunges per leg; rest 45 sec","Treadmill block (15 min): 5 rounds — 2 min at 6–10% incline, 1 min easy","Finisher (3 min): 2 × 45-sec wall sit"]}},
+    {day:"Tuesday",
+      home:{title:"Snatch + Mind Eraser",items:["Warm-up (5 min): Barbell flow","Strength (10 min): Build to a heavy snatch","WOD: 15-min AMRAP — 7 power cleans, 7 burpees, 200m run"]},
+      road:{title:"Push Supersets + Speed",items:["Treadmill block (5 min): Easy jog","Dumbbell block (15 min): 4 rounds — 10 floor presses, 10 shoulder presses, 10 DB squeeze presses, 8 thrusters","Treadmill block (15 min): 10 rounds — 45 sec hard, 45 sec easy","Cool down (2 min): Walk"]}},
+    {day:"Thursday",
+      home:{title:"Benchmark Repeat",items:["Warm-up (5 min): Easy run and barbell prep","WOD (20 min cap): 400m run, 30 HPC; 300m run, 20 HPC; 200m run, 10 HPC","Goal: Beat Week 1 while maintaining sound technique"]},
+      road:{title:"Pull Supersets + Tempo",items:["Treadmill block (5 min): Easy jog","Dumbbell block (15 min): 4 rounds — 12 rows per side, 10 renegade rows, 12 reverse flyes, 10 hammer curls","Treadmill block (15 min): 5 min moderate, 5 min hard, 5 min moderate","Core (3 min): 30-sec plank + 10 dead bugs per side, repeat"]}},
+    {day:"Saturday",
+      home:{title:"Grinder",items:["Warm-up (5 min): Easy row and shoulder prep","WOD: 20-min AMRAP — 10-cal row, 8 shoulder-to-overhead, 8 power cleans, 200m run"]},
+      road:{title:"No-Drop Dumbbell Complex",items:["Treadmill block (5 min): Easy jog","Dumbbell block (20 min): 5 rounds — 6 DB cleans, 6 front squats, 6 push presses, 6 reverse lunges per leg, 6 bent-over rows","Treadmill block (10 min): Steady hard effort","Scaling: Use one DB if grip becomes the limiter"]}}
+  ]},
+  {week:5, workouts:[
+    {day:"Sunday",
+      home:{title:"Squat Test",items:["Warm-up (7 min): Dynamic mobility and progressive squat sets","Strength (15 min): Work to a technically sound heavy back squat","WOD: 10-min AMRAP — 10 thrusters, 10 push-ups"]},
+      road:{title:"Lower-Body Benchmark",items:["Treadmill block (5 min): Easy walk/jog","Dumbbell benchmark (15 min AMRAP): 12 goblet squats, 12 DB RDLs, 10 reverse lunges per leg","Treadmill benchmark: 1-mile time trial or 12-min best sustainable distance","Record: DB weight, rounds + reps, and treadmill result"]}},
+    {day:"Tuesday",
+      home:{title:"Clean Test",items:["Warm-up (7 min): Barbell flow and progressive clean sets","Strength (15 min): Work to a technically sound heavy clean","WOD (12 min cap): 21-15-9 alternating DB snatches and row calories"]},
+      road:{title:"Upper-Push Benchmark",items:["Treadmill block (5 min): Easy jog","Dumbbell benchmark (15 min AMRAP): 10 floor presses, 8 shoulder presses, 10 push-ups, 8 thrusters","Treadmill block (12 min): Alternate 1 min hard / 1 min moderate","Record: DB weight, rounds + reps, and final treadmill speed"]}},
+    {day:"Thursday",
+      home:{title:"Hero Benchmark",items:["Warm-up (5 min): Easy row, hanging prep, barbell prep","WOD (20 min cap): 3 rounds — 15 hang power cleans, 15 toes-to-bar, 300m run"]},
+      road:{title:"Upper-Pull Benchmark",items:["Treadmill block (5 min): Easy jog","Dumbbell benchmark (15 min AMRAP): 12 one-arm rows per side, 10 renegade rows total, 15 rear-delt flyes","Treadmill block (15 min): 8 rounds — 30 sec sprint, 75 sec walk","Record: DB weight, rounds + reps, and peak speed"]}},
+    {day:"Saturday",
+      home:{title:"Final Challenge",items:["Warm-up (5 min): Easy row/run and barbell prep","WOD (20 min cap): 600m run, 40 HPC; 400m run, 20 HPC; 200m run, 10 HPC"]},
+      road:{title:"Road Workout Final",items:["Treadmill block (5 min): Easy jog","Dumbbell block — 5 rounds for time: 8 DB cleans, 8 front squats, 8 push presses, 10 bent-over rows, 10 RDLs","Treadmill block (15 min progression): 5 min easy, 5 min moderate, 5 min hard","Goal: Finish under 40 min with clean movement and controlled pacing"]}}
+  ]}
+];
+
+const STORAGE_KEY = "kz_training_journal_v3";
+const OLD_STORAGE_KEY = "kz_training_journal_v2";
+let journal = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem(OLD_STORAGE_KEY) || localStorage.getItem("kz_training_journal_v1") || "{}");
+let selectedWeek = parseInt(localStorage.getItem("kz_selected_week") || "1", 10);
+if(selectedWeek < 1 || selectedWeek > 5) selectedWeek = 1;
+
+function keyFor(w, i){ return `w${w}_d${i}`; }
+
+function getEntry(key){
+  return journal[key] || {
+    completed:false, date:"", strengthWeight:"", wodResult:"",
+    duration:"", rpe:"", notes:"", mode:"home"
+  };
+}
+
+function saveField(key, field, value){
+  const entry = getEntry(key);
+  entry[field] = field === "completed" ? !!value : value;
+  journal[key] = entry;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(journal));
+  if(field === "mode") render();
+  else { updateStats(); refreshCardState(key); }
+}
+
+function refreshCardState(key){
+  const card = document.querySelector(`[data-key="${key}"]`);
+  if(!card) return;
+  card.classList.toggle("completed", getEntry(key).completed);
+}
+
+function selectWeek(week){
+  selectedWeek = week;
+  localStorage.setItem("kz_selected_week", String(week));
+  renderWeekToggle();
+  render();
+}
+
+function renderWeekToggle(){
+  const toggle = document.getElementById("weekToggle");
+  toggle.innerHTML = program.map(w => `<button class="${w.week === selectedWeek ? "active" : ""}" onclick="selectWeek(${w.week})">Week ${w.week}</button>`).join("");
+}
+
+function render(){
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+  const w = program.find(item => item.week === selectedWeek);
+  const section = document.createElement("section");
+  section.className = "week";
+  section.innerHTML = `
+    <div class="week-title">
+      <h2>Week ${w.week}</h2>
+      <div class="week-progress" id="weekProgress${w.week}"></div>
+    </div>
+    <div class="cards"></div>`;
+  const cards = section.querySelector(".cards");
+
+  w.workouts.forEach((wo, i) => {
+    const key = keyFor(w.week, i);
+    const e = getEntry(key);
+    const mode = e.mode === "road" ? "road" : "home";
+    const selected = wo[mode];
+    const card = document.createElement("article");
+    card.className = "card" + (e.completed ? " completed" : "");
+    card.dataset.key = key;
+    card.innerHTML = `
+      <div class="card-head">
+        <div><div class="day">${wo.day}</div><h3>${selected.title}</h3></div>
+        <label class="complete-wrap"><input type="checkbox" ${e.completed ? "checked" : ""} onchange="saveField('${key}','completed',this.checked)">Done</label>
+      </div>
+      <div class="mode-row">
+        <div class="mode-label">Workout location</div>
+        <div class="segmented" role="group" aria-label="Workout location">
+          <button class="${mode === "home" ? "active home" : ""}" onclick="saveField('${key}','mode','home')">Home Gym</button>
+          <button class="${mode === "road" ? "active road" : ""}" onclick="saveField('${key}','mode','road')">Road Workout</button>
+        </div>
+      </div>
+      <div class="mode-note">${mode === "home" ? "Full home-gym equipment plan" : "Dumbbells + treadmill only, with cardio and weights grouped into separate blocks"}</div>
+      <ul class="workout-list">${selected.items.map(x => `<li>${x}</li>`).join("")}</ul>
+      <div class="fields">
+        <div class="field"><label>Date</label><input type="date" value="${e.date}" onchange="saveField('${key}','date',this.value)"></div>
+        <div class="field"><label>Duration (minutes)</label><input type="number" min="0" max="180" value="${e.duration}" placeholder="e.g. 38" onchange="saveField('${key}','duration',this.value)"></div>
+        <div class="field"><label>Dumbbell / strength weight</label><input value="${escapeAttr(e.strengthWeight)}" placeholder="e.g. 50 lb DBs" onchange="saveField('${key}','strengthWeight',this.value)"></div>
+        <div class="field"><label>Workout result</label><input value="${escapeAttr(e.wodResult)}" placeholder="Time, rounds, distance, speed..." onchange="saveField('${key}','wodResult',this.value)"></div>
+        <div class="field"><label>RPE (1–10)</label><input type="number" min="1" max="10" step="0.5" value="${e.rpe}" placeholder="e.g. 8" onchange="saveField('${key}','rpe',this.value)"></div>
+        <div class="field full"><label>Notes</label><textarea placeholder="Pacing, technique, scaling, how you felt..." onchange="saveField('${key}','notes',this.value)">${escapeHtml(e.notes)}</textarea></div>
+      </div>`;
+    cards.appendChild(card);
+  });
+  app.appendChild(section);
+  updateStats();
+}
+
+function escapeHtml(s=""){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+function escapeAttr(s=""){ return escapeHtml(s); }
+
+function updateStats(){
+  const all = [];
+  program.forEach(w => w.workouts.forEach((_,i) => all.push(getEntry(keyFor(w.week,i)))));
+  const completed = all.filter(x => x.completed).length;
+  const pct = Math.round((completed / all.length) * 100);
+  const rpes = all.map(x => parseFloat(x.rpe)).filter(Number.isFinite);
+  const totalTime = all.reduce((s,x) => s + (parseFloat(x.duration)||0), 0);
+
+  document.getElementById("completedCount").textContent = `${completed} / ${all.length}`;
+  document.getElementById("completionPct").textContent = `${pct}%`;
+  document.getElementById("avgRpe").textContent = rpes.length ? (rpes.reduce((a,b)=>a+b,0)/rpes.length).toFixed(1) : "—";
+  document.getElementById("totalTime").textContent = `${Math.round(totalTime)} min`;
+
+  program.forEach(w => {
+    const entries = w.workouts.map((_,i)=>getEntry(keyFor(w.week,i)));
+    const done = entries.filter(x=>x.completed).length;
+    const el = document.getElementById(`weekProgress${w.week}`);
+    if(el) el.innerHTML = `${done} of ${entries.length} complete<div class="bar"><span style="width:${done/entries.length*100}%"></span></div>`;
+  });
+}
+
+function exportJSON(){
+  const payload = {app:"5-Week Dual-Mode Training Journal", version:2, exportedAt:new Date().toISOString(), journal};
+  download("training-journal-backup.json", JSON.stringify(payload,null,2), "application/json");
+}
+
+function importJSON(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      journal = data.journal || data;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(journal));
+      render();
+      alert("Backup imported.");
+    }catch(e){
+      alert("That file could not be imported.");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+
+function exportCSV(){
+  const rows = [["Week","Day","Mode","Workout","Completed","Date","Duration Minutes","Strength Weight","Workout Result","RPE","Notes"]];
+  program.forEach(w => w.workouts.forEach((wo,i)=>{
+    const e = getEntry(keyFor(w.week,i));
+    const mode = e.mode === "road" ? "road" : "home";
+    rows.push([w.week,wo.day,mode === "road" ? "Road Workout" : "Home Gym",wo[mode].title,e.completed?"Yes":"No",e.date,e.duration,e.strengthWeight,e.wodResult,e.rpe,e.notes]);
+  }));
+  const csv = rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g,'""')}"`).join(",")).join("\n");
+  download("training-journal.csv", csv, "text/csv");
+}
+
+function download(filename, content, type){
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function resetAll(){
+  if(confirm("Erase all journal entries and workout choices on this device?")){
+    journal = {};
+    localStorage.removeItem(STORAGE_KEY);
+    render();
+  }
+}
+
+localStorage.setItem(STORAGE_KEY, JSON.stringify(journal));
+renderWeekToggle();
+render();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js"));}
+</script>
+</body>
+</html>

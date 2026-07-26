@@ -1,0 +1,9 @@
+{
+  "name": "5-Week Training Journal",
+  "short_name": "Workout Journal",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#111827",
+  "description": "Five-week Home Gym and Road Workout journal with week selection."
+}
